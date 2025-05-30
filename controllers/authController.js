@@ -3,19 +3,16 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 
 const authController = {
-  // Register User
   async register(req, res) {
     try {
       const { name, email, password, confirmPassword } = req.body;
 
-      // Validasi
       if (password !== confirmPassword) {
         return res.status(400).json({ 
           message: 'Password dan konfirmasi password tidak cocok' 
         });
       }
 
-      // Cek email sudah terdaftar
       const existingUser = await User.findByEmail(email);
       if (existingUser) {
         return res.status(400).json({ message: 'Email sudah terdaftar' });
@@ -54,7 +51,6 @@ const authController = {
     try {
       const { email, password } = req.body;
 
-      // Cek user exists
       const user = await User.findByEmail(email);
       if (!user) {
         return res.status(401).json({ message: 'Email atau password salah' });
@@ -74,7 +70,6 @@ const authController = {
         { expiresIn: '1h' }
       );
 
-      // Hapus password dari response
       const { password: _, ...userData } = user;
 
       res.json({
@@ -89,7 +84,6 @@ const authController = {
     }
   },
 
-  // Get User Profile
   async getProfile(req, res) {
     try {
       const user = await User.findById(req.user.id);

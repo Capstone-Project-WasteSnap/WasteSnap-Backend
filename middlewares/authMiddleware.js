@@ -1,7 +1,6 @@
 const jwt = require('jsonwebtoken');
 
 const authMiddleware = {
-  // Middleware untuk proteksi route
   authenticate(req, res, next) {
     const token = req.header('Authorization')?.replace('Bearer ', '');
 

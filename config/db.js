@@ -11,7 +11,6 @@ const pool = mysql.createPool({
   queueLimit: 0
 });
 
-// Tes koneksi database saat startup
 pool.getConnection()
   .then(conn => {
     console.log('✅ Connected to MySQL database:', process.env.DB_NAME);
