@@ -2,42 +2,29 @@ const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
 
-const authRoutes = require('./routes/authRoutes');
-const mapRoutes = require('./routes/mapRoutes');
-const eventRoutes = require('./routes/eventRoutes');
-
 const app = express();
 
-// Middleware
-app.use(cors());
+app.use(cors({
+  origin: 'http://localhost:5173',
+  credentials: true
+}));
 app.use(express.json());
 
-// Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/map', mapRoutes);
-app.use('/api/events', eventRoutes);
+app.use('/api/auth', require('./routes/authRoutes'));
+app.use('/api/map', require('./routes/mapRoutes'));
+app.use('/api/events', require('./routes/eventRoutes'));
+app.use('/api/scans', require('./routes/scanRoutes'));
 
-// Health check
 app.get('/api/health', (req, res) => {
-  res.json({ status: 'OK', message: 'Server is running' });
+  res.json({ status: 'OK' });
 });
 
-// Error handling
 app.use((err, req, res, next) => {
   console.error(err.stack);
-  res.status(500).json({ message: 'Terjadi kesalahan server' });
+  res.status(500).json({ message: 'Server error' });
 });
-
-const corsOptions = {
-  origin: 'http://localhost:3000',
-  credentials: true,
-  optionsSuccessStatus: 200
-};
-app.use(cors(corsOptions));
-
-
 
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(`Server berjalan di port ${PORT}`);
+  console.log(`Server running on port ${PORT}`);
 });

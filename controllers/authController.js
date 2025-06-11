@@ -18,20 +18,16 @@ const authController = {
         return res.status(400).json({ message: 'Email sudah terdaftar' });
       }
 
-      // Hash password
       const hashedPassword = await bcrypt.hash(password, 10);
 
-      // Simpan user baru
       const userId = await User.create({ name, email, password: hashedPassword });
 
-      // Generate token
       const token = jwt.sign(
         { id: userId },
         process.env.JWT_SECRET,
         { expiresIn: '1h' }
       );
 
-      // Ambil data user tanpa password
       const user = await User.findById(userId);
 
       res.status(201).json({
