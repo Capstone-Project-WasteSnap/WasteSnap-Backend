@@ -40,7 +40,7 @@ WasteSnap-Backend-main/
 ## 🛠️ Persyaratan Sistem
 
 - **Node.js** versi 14.x atau lebih baru
-- **MongoDB** versi 4.x atau lebih baru
+- **MySql** versi terbaru
 - **npm** atau **yarn** sebagai package manager
 
 ## ⚡ Cara Menjalankan
