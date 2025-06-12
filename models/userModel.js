@@ -17,7 +17,31 @@ const User = {
     );
     return rows[0];
   },
-
+  async update(id, { name, email, address, phone }) {
+    try {
+      const [result] = await pool.query(
+        `UPDATE users 
+         SET name = ?, email = ?, address = ?, phone = ?
+         WHERE id = ?`,
+        [name, email, address, phone, id]
+      );
+      
+      if (result.affectedRows === 0) {
+        throw new Error('User tidak ditemukan');
+      }
+      
+      // Ambil data terbaru tanpa kolom updated_at
+      const [updatedUser] = await pool.query(
+        'SELECT id, name, email, address, phone FROM users WHERE id = ?',
+        [id]
+      );
+      
+      return updatedUser[0];
+    } catch (error) {
+      console.error('Database error:', error);
+      throw error;
+    }
+  },
   async findById(id) {
     const [rows] = await pool.query(
       `SELECT id, name, email, address, phone, created_at 
