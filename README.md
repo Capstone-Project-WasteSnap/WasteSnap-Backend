@@ -1,3 +1,4 @@
+
 # 🧠 WasteSnap Backend
 
 Ini adalah backend dari aplikasi WasteSnap, dibangun menggunakan Node.js dan Express.js. Backend ini menangani autentikasi, manajemen data event, peta lokasi, dan menyediakan REST API yang diakses oleh frontend.
@@ -8,7 +9,7 @@ Ini adalah backend dari aplikasi WasteSnap, dibangun menggunakan Node.js dan Exp
 - **Manajemen Event**: CRUD operasi untuk data event sampah
 - **Manajemen Lokasi**: Pengelolaan data peta dan lokasi tempat sampah
 - **Middleware Keamanan**: Otorisasi dan validasi request
-- **Database Integration**: Terhubung dengan MongoDB menggunakan Mongoose
+- **Database Integration**: Terhubung dengan MySQL menggunakan Sequelize
 
 ## 📁 Struktur Folder
 
@@ -22,7 +23,7 @@ WasteSnap-Backend-main/
 │   └── mapController.js
 ├── middlewares/          # Middleware untuk validasi & otorisasi
 │   └── authMiddleware.js
-├── models/               # Skema Mongoose untuk MongoDB
+├── models/               # Model Sequelize untuk MySQL
 │   ├── userModel.js
 │   ├── eventModel.js
 │   └── mapModel.js
@@ -40,7 +41,7 @@ WasteSnap-Backend-main/
 ## 🛠️ Persyaratan Sistem
 
 - **Node.js** versi 14.x atau lebih baru
-- **Mysql** versi terbaru
+- **MySQL** versi terbaru
 - **npm** atau **yarn** sebagai package manager
 
 ## ⚡ Cara Menjalankan
@@ -60,21 +61,24 @@ npm install
 Buat file `.env` di root folder dengan isi berikut:
 ```env
 PORT=5000
-MONGO_URI=mongodb://localhost:27017/wastesnap
+DB_HOST=localhost
+DB_USER=root
+DB_PASSWORD=your_mysql_password
+DB_NAME=wastesnap
 JWT_SECRET=your_super_secret_jwt_key_here
 NODE_ENV=development
 ```
 
-### 4. Jalankan MongoDB
-Pastikan MongoDB berjalan di sistem Anda:
+### 4. Jalankan MySQL
+Pastikan MySQL berjalan di sistem Anda:
 ```bash
-# Untuk macOS dengan Homebrew
-brew services start mongodb-community
-
 # Untuk Ubuntu/Debian
-sudo systemctl start mongod
+sudo service mysql start
 
-# Untuk Windows, jalankan MongoDB service
+# Untuk macOS (Homebrew)
+brew services start mysql
+
+# Untuk Windows, pastikan MySQL service aktif
 ```
 
 ### 5. Jalankan Server
@@ -138,8 +142,8 @@ npm run format
 
 - **Runtime**: Node.js
 - **Framework**: Express.js
-- **Database**: MongoDB
-- **ODM**: Mongoose
+- **Database**: MySQL
+- **ORM**: Sequelize
 - **Authentication**: JSON Web Token (JWT)
 - **Environment**: dotenv
 - **Development**: nodemon
@@ -174,9 +178,9 @@ lsof -i :5000
 kill -9 <PID>
 ```
 
-### MongoDB Connection Error
-- Pastikan MongoDB service berjalan
-- Cek konfigurasi `MONGO_URI` di file `.env`
+### MySQL Connection Error
+- Pastikan MySQL service berjalan
+- Cek konfigurasi `DB_HOST`, `DB_USER`, `DB_PASSWORD`, dan `DB_NAME` di file `.env`
 - Pastikan database `wastesnap` sudah dibuat
 
 ### JWT Token Issues
