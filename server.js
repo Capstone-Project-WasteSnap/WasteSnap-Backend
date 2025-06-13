@@ -15,6 +15,7 @@ const allowedOrigins = [
   "http://localhost:3000",
   "http://172.20.224.1:3000",
   "http://192.168.1.10:5173",
+  "https://wastesnap-frontend.netlify.app",
   "https://wastesnap-frontend.vercel.app",
 ];
 
