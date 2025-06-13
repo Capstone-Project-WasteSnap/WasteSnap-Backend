@@ -16,6 +16,7 @@ const allowedOrigins = [
   "http://172.20.224.1:3000",
   "http://192.168.1.10:5173",
   "https://wastesnap-frontend.vercel.app",
+  "https://wastesnap-backend-production.up.railway.app"
 ];
 
 //  CORS middleware
