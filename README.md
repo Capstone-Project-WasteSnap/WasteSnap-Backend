@@ -92,6 +92,14 @@ npm start
 
 Server akan berjalan di `http://localhost:5000`
 
+## 📚 API Documentation
+[View in Swagger UI](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/Capstone-Project-WasteSnap/WasteSnap-Backend/main/apidoc/Story-api.yaml)
+
+<details>
+<summary>🔍 Preview</summary>
+  
+![API Docs Preview](https://petstore.swagger.io/?url=https://raw.githubusercontent.com/Capstone-Project-WasteSnap/WasteSnap-Backend/main/apidoc/Story-api.yaml&output=image)</details>
+
 ## 📬 API Endpoints
 
 ### Authentication
