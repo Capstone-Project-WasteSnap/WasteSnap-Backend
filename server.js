@@ -6,7 +6,7 @@ const app = express();
 
 app.use(
   cors({
-    origin: "https://wastesnap.1dev.win",
+    origin: true, // Allow all origins temporarily
     credentials: true,
   })
 );
