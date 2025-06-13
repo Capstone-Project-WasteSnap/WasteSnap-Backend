@@ -17,7 +17,8 @@ const allowedOrigins = [
   "http://192.168.1.10:5173",
   "https://wastesnap-frontend.netlify.app",
   "https://wastesnap-frontend.vercel.app",
-  "https://wastesnap-backend-production.up.railway.app"
+  "https://wastesnap-backend-production.up.railway.app",
+  "https://wastesnap.1dev.win"
 ];
 
 // Enhanced CORS configuration
@@ -39,7 +40,7 @@ const corsOptions = {
     }
 
     console.log("Origin blocked:", origin);
-    const error = new Error(CORS blocked for origin: ${origin});
+    const error = new Error(`CORS blocked for origin: ${origin}`);
     console.error(error.message);
     return callback(error);
   },
@@ -123,7 +124,6 @@ app.use((err, req, res, next) => {
 // Start server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => {
-  console.log(Server running on port ${PORT});
+  console.log(`Server running on port ${PORT}`);
   console.log("Allowed origins:", allowedOrigins);
-  console.log(CORS configuration:, corsOptions);
 });
