@@ -1,95 +1,127 @@
-const express = require('express');
-const cors = require('cors');
-const path = require('path');
-require('dotenv').config();
+const express = require("express");
+const cors = require("cors");
+require("dotenv").config();
 
-// Import routes dengan cara yang aman
-const authRoutes = require('./routes/authRoutes');
-const mapRoutes = require('./routes/mapRoutes');
-const eventRoutes = require('./routes/eventRoutes');
-const scanRoutes = require('./routes/scanRoutes');
+const authRoutes = require("./routes/authRoutes");
+const mapRoutes = require("./routes/mapRoutes");
+const eventRoutes = require("./routes/eventRoutes");
+const scanRoutes = require("./routes/scanRoutes");
 
 const app = express();
 
-// Konfigurasi CORS
+// Allowed origins with more flexible matching
 const allowedOrigins = [
-  'http://localhost:5173',
-  'https://wastesnap-frontend.netlify.app',
-  'https://wastesnap-backend-production.up.railway.app'
+  "http://localhost:5173",
+  "http://localhost:3000",
+  "http://172.20.224.1:3000",
+  "http://192.168.1.10:5173",
+  "https://wastesnap-frontend.netlify.app",
+  "https://wastesnap-frontend.vercel.app",
+  "https://wastesnap-frontend.netlify.app",
+  "https://wastesnap-backend-production.up.railway.app"
 ];
 
-app.use(cors({
-  origin: allowedOrigins,
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS']
-}));
-
-// Middleware untuk menangkap error route yang tidak valid
-app.use((req, res, next) => {
-  try {
-    next();
-  } catch (err) {
-    if (err.message.includes('path-to-regexp')) {
-      console.error('Invalid route detected:', {
-        path: req.path,
-        method: req.method,
-        error: err.message
-      });
-      return res.status(500).json({ 
-        error: 'Server configuration error',
-        message: 'Invalid route pattern'
-      });
+// Enhanced CORS configuration
+const corsOptions = {
+  origin: function (origin, callback) {
+    // Allow requests with no origin (like mobile apps, curl, postman)
+    if (!origin) return callback(null, true);
+    
+    // Check if origin is in allowed list or contains vercel/netlify/railway
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.endsWith(".vercel.app") ||
+      origin.endsWith(".netlify.app") ||
+      origin.endsWith(".railway.app")
+    ) {
+      return callback(null, true);
     }
-    next(err);
+    
+    const error = new Error(CORS blocked for origin: ${origin});
+    console.error(error.message);
+    return callback(error);
+  },
+  credentials: true,
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "X-Requested-With",
+    "Accept"
+  ],
+  optionsSuccessStatus: 200, // For legacy browser support
+  preflightContinue: false
+};
+
+// Apply CORS middleware
+app.use(cors(corsOptions));
+
+// Explicitly handle OPTIONS requests for all routes
+app.options("*", cors(corsOptions));
+
+// Add manual CORS headers as fallback
+app.use((req, res, next) => {
+  const origin = req.headers.origin;
+  if (origin && allowedOrigins.some(allowed => origin.includes(allowed))) {
+    res.header("Access-Control-Allow-Origin", origin);
   }
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS"
+  );
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-Requested-With"
+  );
+  res.header("Access-Control-Allow-Credentials", "true");
+  next();
 });
 
-// Body parser dengan limit
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// Middleware parsing JSON
+app.use(express.json());
 
-// Load routes dengan error handling
-function loadRoutes() {
-  try {
-    app.use('/api/auth', authRoutes);
-    app.use('/api/map', mapRoutes);
-    app.use('/api/events', eventRoutes);
-    app.use('/api/scans', scanRoutes);
-    
-    console.log('All routes loaded successfully');
-  } catch (err) {
-    console.error('Failed to load routes:', err);
-    process.exit(1);
-  }
-}
+// Routes
+app.use("/api/auth", authRoutes);
+app.use("/api/map", mapRoutes);
+app.use("/api/events", eventRoutes);
+app.use("/api/scans", scanRoutes);
+
+// Special handling for OPTIONS on auth login
+app.options("/api/auth/login", cors(corsOptions));
 
 // Health check endpoint
-app.get('/api/health', (req, res) => {
-  res.status(200).json({
-    status: 'OK',
-    timestamp: new Date().toISOString(),
-    environment: process.env.NODE_ENV || 'development'
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ 
+    status: "OK",
+    allowedOrigins: allowedOrigins,
+    currentTime: new Date().toISOString()
   });
 });
 
-// Error handler khusus untuk route
+// Enhanced global error handler
 app.use((err, req, res, next) => {
-  if (err.message.includes('path-to-regexp')) {
-    return res.status(500).json({
-      error: 'Invalid Route Configuration',
-      message: 'Server has invalid route patterns',
-      documentation: 'https://expressjs.com/en/guide/routing.html'
+  console.error("[Global Error]", err.stack);
+  
+  if (err.message.includes("CORS")) {
+    return res.status(403).json({
+      error: "CORS Error",
+      message: err.message,
+      allowedOrigins: allowedOrigins,
+      yourOrigin: req.headers.origin || "none",
+      documentation: "https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS"
     });
   }
-  next(err);
+  
+  res.status(500).json({
+    error: "Internal Server Error",
+    message: process.env.NODE_ENV === "development" ? err.message : "Something went wrong"
+  });
 });
 
-// Inisialisasi server
+// Start server
 const PORT = process.env.PORT || 5000;
-
-loadRoutes();
-
 app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-  console.log('Allowed origins:', allowedOrigins);
+  console.log(Server running on port ${PORT});
+  console.log("Allowed origins:", allowedOrigins);
+  console.log(CORS configuration:, corsOptions);
 });
