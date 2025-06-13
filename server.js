@@ -17,13 +17,13 @@ const allowedOrigins = [
   "http://192.168.1.10:5173",
   "https://wastesnap-frontend.netlify.app",
   "https://wastesnap-frontend.vercel.app",
-  "https://wastesnap-frontend.netlify.app",
   "https://wastesnap-backend-production.up.railway.app"
 ];
 
 // Enhanced CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
+   console.log("Incoming origin:", origin);
     // Allow requests with no origin (like mobile apps, curl, postman)
     if (!origin) return callback(null, true);
     
@@ -34,9 +34,11 @@ const corsOptions = {
       origin.endsWith(".netlify.app") ||
       origin.endsWith(".railway.app")
     ) {
+      console.log("Origin allowed:", origin);
       return callback(null, true);
     }
-    
+
+    console.log("Origin blocked:", origin);
     const error = new Error(CORS blocked for origin: ${origin});
     console.error(error.message);
     return callback(error);
