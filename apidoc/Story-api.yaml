@@ -1,0 +1,660 @@
+openapi: 3.0.0
+info:
+  title: Waste Management System API
+  description: API for managing waste management system including users, events, locations, and scan history
+  version: 1.0.0
+servers:
+  - url: https://api.wastemanagement.example.com/v1
+    description: Production server
+
+tags:
+  - name: Authentication
+    description: User registration and login
+  - name: Profile
+    description: User profile management
+  - name: Events
+    description: Waste management events
+  - name: Map
+    description: Waste location management
+  - name: Scan
+    description: Waste scan history
+
+paths:
+  /auth/register:
+    post:
+      tags: [Authentication]
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: John Doe
+                email:
+                  type: string
+                  format: email
+                  example: john@example.com
+                password:
+                  type: string
+                  format: password
+                  example: securepassword123
+                confirmPassword:
+                  type: string
+                  format: password
+                  example: securepassword123
+              required: [name, email, password, confirmPassword]
+      responses:
+        '201':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Registrasi berhasil
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  user:
+                    $ref: '#/components/schemas/User'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login:
+    post:
+      tags: [Authentication]
+      summary: Login user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: john@example.com
+                password:
+                  type: string
+                  format: password
+                  example: securepassword123
+              required: [email, password]
+      responses:
+        '200':
+          description: Login successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Login berhasil
+                  token:
+                    type: string
+                    example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                  user:
+                    $ref: '#/components/schemas/User'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/profile:
+    get:
+      tags: [Profile]
+      summary: Get user profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Profile retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags: [Profile]
+      summary: Update user profile
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: John Updated
+                email:
+                  type: string
+                  format: email
+                  example: john.updated@example.com
+                phone:
+                  type: string
+                  example: 08987654321
+                address:
+                  type: string
+                  example: 456 Updated St
+              required: [name, email]
+      responses:
+        '200':
+          description: Profile updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: Profil berhasil diperbarui
+                  user:
+                    $ref: '#/components/schemas/UserProfile'
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /events:
+    post:
+      tags: [Events]
+      summary: Create a new event
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EventCreate'
+      responses:
+        '201':
+          description: Event created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Event'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    get:
+      tags: [Events]
+      summary: Get all events
+      responses:
+        '200':
+          description: List of events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EventBasic'
+
+  /events/search:
+    get:
+      tags: [Events]
+      summary: Search events
+      parameters:
+        - name: keyword
+          in: query
+          description: Search keyword
+          required: false
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Search results
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/EventBasic'
+
+  /events/{id}:
+    get:
+      tags: [Events]
+      summary: Get event by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Event details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Event'
+        '404':
+          description: Event not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /map/locations:
+    get:
+      tags: [Map]
+      summary: Get all locations
+      responses:
+        '200':
+          description: List of locations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Location'
+    post:
+      tags: [Map]
+      summary: Create a new location
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LocationCreate'
+      responses:
+        '201':
+          description: Location created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+
+  /map/locations/{id}:
+    get:
+      tags: [Map]
+      summary: Get location by ID
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Location details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Location'
+        '404':
+          description: Location not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    put:
+      tags: [Map]
+      summary: Update location
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LocationCreate'
+      responses:
+        '200':
+          description: Location updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Location updated successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+    delete:
+      tags: [Map]
+      summary: Delete location
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Location deleted successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: Location deleted successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /scan:
+    post:
+      tags: [Scan]
+      summary: Save scan result
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ScanCreate'
+      responses:
+        '201':
+          description: Scan saved successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/ScanResult'
+
+  /scan/{userId}:
+    get:
+      tags: [Scan]
+      summary: Get scan history
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: userId
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Scan history retrieved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/ScanHistory'
+
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          example: john@example.com
+
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: John Doe
+        email:
+          type: string
+          example: john@example.com
+        address:
+          type: string
+          example: 123 Main St
+        phone:
+          type: string
+          example: 08123456789
+        created_at:
+          type: string
+          format: date-time
+          example: 2023-01-01T00:00:00.000Z
+
+    EventCreate:
+      type: object
+      properties:
+        title:
+          type: string
+          example: Clean Up Day
+        description:
+          type: string
+          example: Community clean up event
+        event_date:
+          type: string
+          format: date-time
+          example: 2023-12-15 09:00:00
+        location_address:
+          type: string
+          example: Central Park
+      required: [title, description, event_date, location_address]
+
+    EventBasic:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        title:
+          type: string
+          example: Clean Up Day
+        description:
+          type: string
+          example: Community clean up event
+        event_date:
+          type: string
+          format: date-time
+          example: 2023-12-15T09:00:00.000Z
+        location_address:
+          type: string
+          example: Central Park
+        user_id:
+          type: integer
+          example: 1
+        organizer_name:
+          type: string
+          example: John Doe
+
+    Event:
+      allOf:
+        - $ref: '#/components/schemas/EventBasic'
+        - type: object
+          properties:
+            organizer_email:
+              type: string
+              example: john@example.com
+            organizer_phone:
+              type: string
+              example: 08123456789
+
+    Location:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        name:
+          type: string
+          example: TPS3R Central
+        address:
+          type: string
+          example: 123 Main St
+        lat:
+          type: number
+          format: float
+          example: -6.123456
+        lng:
+          type: number
+          format: float
+          example: 106.123456
+        type:
+          type: string
+          enum: [TPS3R, Recycling Center]
+          example: TPS3R
+
+    LocationCreate:
+      type: object
+      properties:
+        name:
+          type: string
+          example: New Recycling Center
+        address:
+          type: string
+          example: 456 New St
+        lat:
+          type: number
+          format: float
+          example: -6.234567
+        lng:
+          type: number
+          format: float
+          example: 106.234567
+        type:
+          type: string
+          enum: [TPS3R, Recycling Center]
+          example: Recycling Center
+      required: [name, address, lat, lng, type]
+
+    ScanCreate:
+      type: object
+      properties:
+        imageUrl:
+          type: string
+          example: https://example.com/scans/1.jpg
+        result:
+          type: string
+          example: Organic Waste
+      required: [imageUrl, result]
+
+    ScanResult:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        imageUrl:
+          type: string
+          example: https://example.com/scans/1.jpg
+        result:
+          type: string
+          example: Organic Waste
+
+    ScanHistory:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        image_url:
+          type: string
+          example: https://example.com/scans/1.jpg
+        result:
+          type: string
+          example: Organic Waste
+        created_at:
+          type: string
+          format: date-time
+          example: 2023-01-01T00:00:00.000Z
+
+    Error:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Terjadi kesalahan server
+        success:
+          type: boolean
+          example: false
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
