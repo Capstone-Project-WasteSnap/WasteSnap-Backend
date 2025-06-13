@@ -9,7 +9,7 @@ const scanRoutes = require("./routes/scanRoutes");
 
 const app = express();
 
-// Enhanced allowed origins with duplicates removed
+// Allowed origins with more flexible matching
 const allowedOrigins = [
   "http://localhost:5173",
   "http://localhost:3000",
@@ -17,27 +17,29 @@ const allowedOrigins = [
   "http://192.168.1.10:5173",
   "https://wastesnap-frontend.netlify.app",
   "https://wastesnap-frontend.vercel.app",
+  "https://wastesnap-frontend.netlify.app",
   "https://wastesnap-backend-production.up.railway.app"
 ];
 
-// Optimized CORS configuration
+// Enhanced CORS configuration
 const corsOptions = {
   origin: function (origin, callback) {
     // Allow requests with no origin (like mobile apps, curl, postman)
     if (!origin) return callback(null, true);
     
-    // Check against allowed origins with more flexible matching
-    const isAllowed = allowedOrigins.some(allowed => 
-      origin === allowed || 
-      origin.endsWith(new URL(allowed).hostname)
-    );
-
-    if (isAllowed) {
+    // Check if origin is in allowed list or contains vercel/netlify/railway
+    if (
+      allowedOrigins.includes(origin) ||
+      origin.endsWith(".vercel.app") ||
+      origin.endsWith(".netlify.app") ||
+      origin.endsWith(".railway.app")
+    ) {
       return callback(null, true);
     }
     
-    console.warn(`CORS blocked for origin: ${origin}`);
-    return callback(new Error(`Not allowed by CORS. Origin: ${origin}`));
+    const error = new Error(CORS blocked for origin: ${origin});
+    console.error(error.message);
+    return callback(error);
   },
   credentials: true,
   methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -47,31 +49,36 @@ const corsOptions = {
     "X-Requested-With",
     "Accept"
   ],
-  exposedHeaders: [
-    "Content-Length",
-    "Authorization"
-  ],
-  maxAge: 86400, // 24 hours
-  optionsSuccessStatus: 204
+  optionsSuccessStatus: 200, // For legacy browser support
+  preflightContinue: false
 };
 
 // Apply CORS middleware
 app.use(cors(corsOptions));
 
-// Handle preflight requests globally
-app.options("*", (req, res) => {
+// Explicitly handle OPTIONS requests for all routes
+app.options("*", cors(corsOptions));
+
+// Add manual CORS headers as fallback
+app.use((req, res, next) => {
   const origin = req.headers.origin;
-  if (origin && allowedOrigins.includes(origin)) {
+  if (origin && allowedOrigins.some(allowed => origin.includes(allowed))) {
     res.header("Access-Control-Allow-Origin", origin);
   }
-  res.header("Access-Control-Allow-Methods", corsOptions.methods.join(","));
-  res.header("Access-Control-Allow-Headers", corsOptions.allowedHeaders.join(","));
+  res.header(
+    "Access-Control-Allow-Methods",
+    "GET, POST, PUT, DELETE, OPTIONS"
+  );
+  res.header(
+    "Access-Control-Allow-Headers",
+    "Content-Type, Authorization, X-Requested-With"
+  );
   res.header("Access-Control-Allow-Credentials", "true");
-  res.status(204).end();
+  next();
 });
 
-// Middleware for JSON parsing with limit
-app.use(express.json({ limit: "10mb" }));
+// Middleware parsing JSON
+app.use(express.json());
 
 // Routes
 app.use("/api/auth", authRoutes);
@@ -79,47 +86,42 @@ app.use("/api/map", mapRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/scans", scanRoutes);
 
-// Enhanced health check endpoint
+// Special handling for OPTIONS on auth login
+app.options("/api/auth/login", cors(corsOptions));
+
+// Health check endpoint
 app.get("/api/health", (req, res) => {
-  const healthCheck = {
+  res.status(200).json({ 
     status: "OK",
-    uptime: process.uptime(),
-    timestamp: new Date().toISOString(),
     allowedOrigins: allowedOrigins,
-    environment: process.env.NODE_ENV || "development"
-  };
-  res.status(200).json(healthCheck);
+    currentTime: new Date().toISOString()
+  });
 });
 
-// Error handling middleware
+// Enhanced global error handler
 app.use((err, req, res, next) => {
-  console.error(`[${new Date().toISOString()}] Error:`, err.stack);
+  console.error("[Global Error]", err.stack);
   
   if (err.message.includes("CORS")) {
     return res.status(403).json({
-      error: "Forbidden",
+      error: "CORS Error",
       message: err.message,
       allowedOrigins: allowedOrigins,
-      currentOrigin: req.headers.origin,
-      documentation: "https://enable-cors.org/"
+      yourOrigin: req.headers.origin || "none",
+      documentation: "https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS"
     });
   }
   
   res.status(500).json({
     error: "Internal Server Error",
-    message: process.env.NODE_ENV === "production" 
-      ? "Something went wrong" 
-      : err.message
+    message: process.env.NODE_ENV === "development" ? err.message : "Something went wrong"
   });
 });
 
-// Server configuration
+// Start server
 const PORT = process.env.PORT || 5000;
-const server = app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-  console.log("🛡️  Allowed CORS origins:", allowedOrigins);
+app.listen(PORT, () => {
+  console.log(Server running on port ${PORT});
+  console.log("Allowed origins:", allowedOrigins);
+  console.log(CORS configuration:, corsOptions);
 });
-
-// Handle server timeouts
-server.keepAliveTimeout = 60000; // 60 seconds
-server.headersTimeout = 65000; // 65 seconds
